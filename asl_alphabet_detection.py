@@ -1,28 +1,67 @@
-#import data sets for sign language
-import string
-import pandas as pd
+# import necessary packages for hand gesture recognition project using Python OpenCV
+import cv2
 import numpy as np
+import mediapipe as mp
 import tensorflow as tf
-import matplotlib.pyplot as plt
-from tensorflow.keras.preprocessing.image import ImageDataGenerator
-#accessing data sets
+from tensorflow.keras.models import load_model
 
-df = pd.read_csv('/content/sign_mnist_train.csv')
-df.head()
-def load_data(path):
-	df = pd.read_csv(path)
-	y = np.array([label if label < 9
-				else label-1 for label in df['label']])
-	df = df.drop('label', axis=1)
-	x = np.array([df.iloc[i].to_numpy().reshape((28, 28))
-				for i in range(len(df))]).astype(float)
-	x = np.expand_dims(x, axis=3)
-	y = pd.get_dummies(y).values
+# initialize mediapipe
+mpHands = mp.solutions.hands
+hands = mpHands.Hands(max_num_hands=1, min_detection_confidence=0.7)
+mpDraw = mp.solutions.drawing_utils
 
-	return x, y
+# Load the gesture recognizer model
+model = load_model(filepath=r'C:\Users\LYEE5705\Downloads\hand-gesture-recognition-code\mp_hand_gesture')
 
-X_train, Y_train = load_data('/content/sign_mnist_train.csv')
-X_test, Y_test = load_data('/content/sign_mnist_test.csv')
+# Load class names
+filepath_gesture_names = (r'C:\Users\LYEE5705\Downloads\hand-gesture-recognition-code\gesture.names')
+f = open(filepath_gesture_names, 'r')
+classNames = f.read().split('\n')
+f.close()
+print(classNames)
 
-print(X_train.shape, Y_train.shape)
-print(X_test.shape, Y_test.shape)
+# Initialize the webcam for Hand Gesture Recognition Python project
+cap = cv2.VideoCapture(0)
+
+while True:
+    # Read each frame from the webcam
+    _, frame = cap.read()
+    x, y, c = frame.shape
+
+    # Flip the frame vertically
+    frame = cv2.flip(frame, 1)
+    # Show the final output
+    cv2.imshow("Output", frame)
+    if cv2.waitKey(1) == ord('q'):
+        break
+        # release the webcam and destroy all active windows
+cap.release()
+cv2.destroyAllWindows()
+
+framergb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+# Get hand landmark prediction
+result = hands.process(framergb)
+
+className = ''
+
+# post process the result
+if result.multi_hand_landmarks:
+    landmarks = []
+    for handslms in result.multi_hand_landmarks:
+        for lm in handslms.landmark:
+            # print(id, lm)
+            lmx = int(lm.x * x)
+            lmy = int(lm.y * y)
+            landmarks.append([lmx, lmy])
+
+        # Drawing landmarks on frames
+        mpdraw.draw_landmarks(frame, handslms, mpHands.HAND_CONNECTIONS)
+
+        # Predict gesture in Hand Gesture Recognition project
+        prediction = model.predict([landmarks])
+        print(prediction)
+        classID = np.argmax(prediction)
+        className = classNames[classID],capitalize()
+
+    # show the prediction on the frame
+    cv2.putText(frame, className, (10, 50), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 2, cv2.LINE_AA)

@@ -1,15 +1,17 @@
 #importing libraries and downloading mediapipe and open cv
 import cv2
 import mediapipe as mp
-import numpy as np
 from mediapipe.tasks import python
 from mediapipe.tasks.python import vision
+from tensorflow.keras.models import load_model
 model_path = '/absolute/path/to/gesture_recognizer.task'
 
-
+# initialize mediapipe
 mp_drawing = mp.solutions.drawing_utils
 mp_drawing_styles = mp.solutions.drawing_styles
 mphands = mp.solutions.hands
+
+
 
 cap = cv2.VideoCapture(0)
 hands = mphands.Hands()
@@ -25,3 +27,10 @@ while(True):
             mp_drawing.draw_landmarks(image, hand_landmarks, mphands.HAND_CONNECTIONS)
     cv2.imshow('Handtracker', image)
     cv2.waitKey(1)
+        # Stop Key to Stop Camera
+    if cv2.waitKey(1) == ord('q'):
+        break
+        # release the webcam and destroy all active windows
+        cap.release()
+        cv2.destroyAllWindows()
+
